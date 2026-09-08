@@ -1,0 +1,14 @@
+{
+  "domain": "schulmanager_online",
+  "name": "Schulmanager Online",
+  "version": "0.1.0",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "config_flow": true,
+  "documentation": "https://github.com/MichelFR/ha-schulmanager-online",
+  "issue_tracker": "https://github.com/MichelFR/ha-schulmanager-online/issues",
+  "codeowners": ["@MichelFR"],
+  "dependencies": [],
+  "requirements": [],
+  "quality_scale": "bronze"
+}

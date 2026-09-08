@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          jq --arg v "$version" '.version = $v' \
+            custom_components/schulmanager_online/manifest.json > manifest.tmp
+          mv manifest.tmp custom_components/schulmanager_online/manifest.json
+          cat custom_components/schulmanager_online/manifest.json
+
+      - name: Build ZIP
+        run: |
+          cd custom_components/schulmanager_online
+          zip -r schulmanager_online.zip . -x '*.pyc' -x '__pycache__/*'
+
+      - name: Attach ZIP to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: custom_components/schulmanager_online/schulmanager_online.zip
