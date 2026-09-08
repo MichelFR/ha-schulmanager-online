@@ -73,9 +73,14 @@ holds the first two in full; the rest follow the same shape.
 | Vertretung oder Ausfall | `planabweichungen_heute` / `_morgen` rise | iPhone + iPad |
 | Morgen-Briefing | 06:45, only on school days | iPhone + iPad |
 | Abend-Briefing | 19:30, only if there is something to say | iPhone + iPad |
-| Neuer Elternbrief | `ungelesene_elternbriefe` above 0 | both parents |
-| Unentschuldigte Fehlstunden | value rises | parent |
-| Neuer Klassenbucheintrag | value rises | parent |
+| Neuer Elternbrief | `ungelesene_elternbriefe` above 0 | parent + iPhone + iPad |
+| Unentschuldigte Fehlstunden | value rises | parent + iPhone + iPad |
+| Neuer Klassenbucheintrag | value rises | parent + iPhone + iPad |
+
+Every alert goes to the student as well as the parent — the three above started
+parent-only and were widened. The shared title/body is computed once into
+`variables` and reused across the `parallel` branches, so the wording cannot
+drift between devices.
 
 ### Two rules worth copying
 
