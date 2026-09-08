@@ -124,11 +124,13 @@ async def test_unread_letters(hass: HomeAssistant, entry, raw_payload) -> None:
     assert letters.state == "1"
 
 
-async def test_calendar_events(hass: HomeAssistant, entry, raw_payload) -> None:
-    """The calendar should return the week's lessons."""
+async def test_calendar_entities(hass: HomeAssistant, entry, raw_payload) -> None:
+    """One timetable calendar per student, plus the school calendar."""
     await _setup(hass, entry, raw_payload)
-    calendars = hass.states.async_all("calendar")
-    assert len(calendars) == 1
+    calendars = {state.entity_id for state in hass.states.async_all("calendar")}
+    assert len(calendars) == 2
+    assert any(entity_id.endswith("_timetable") for entity_id in calendars)
+    assert any(entity_id.endswith("_school_calendar") for entity_id in calendars)
 
 
 async def test_unload(hass: HomeAssistant, entry, raw_payload) -> None:

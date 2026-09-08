@@ -65,11 +65,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up the binary sensors."""
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities: list[BinarySensorEntity] = [
         SchulmanagerBinarySensor(coordinator, student_id, description)
         for student_id in coordinator.data.students
         for description in BINARY_SENSORS
-    )
+    ]
+    entities.append(SchulmanagerHolidaySensor(coordinator, entry))
+    async_add_entities(entities)
 
 
 class SchulmanagerBinarySensor(SchulmanagerEntity, BinarySensorEntity):
@@ -92,3 +94,32 @@ class SchulmanagerBinarySensor(SchulmanagerEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return the current state."""
         return self.entity_description.is_on_fn(self.student, dt_util.now())
+
+
+class SchulmanagerHolidaySensor(SchulmanagerEntity, BinarySensorEntity):
+    """Whether today falls in a school holiday.
+
+    Handy as an automation condition: no school run, no 06:30 alarm.
+    """
+
+    _attr_translation_key = "school_holiday"
+
+    def __init__(
+        self, coordinator: SchulmanagerCoordinator, entry: SchulmanagerConfigEntry
+    ) -> None:
+        """Attach the sensor to the first student's device."""
+        super().__init__(coordinator, next(iter(coordinator.data.students)))
+        self._attr_unique_id = f"{entry.entry_id}_school_holiday"
+
+    @property
+    def is_on(self) -> bool:
+        """Return True while a holiday covers today."""
+        return self.coordinator.data.holiday_on(dt_util.now().date()) is not None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str] | None:
+        """Name the holiday and when it ends."""
+        holiday = self.coordinator.data.holiday_on(dt_util.now().date())
+        if holiday is None:
+            return None
+        return {"name": holiday.summary, "ends": holiday.end.isoformat()}

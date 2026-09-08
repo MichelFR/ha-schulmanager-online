@@ -103,6 +103,9 @@
       },
       "unread_letters": {
         "name": "Unread letters"
+      },
+      "next_school_event": {
+        "name": "Next school event"
       }
     },
     "binary_sensor": {
@@ -114,11 +117,17 @@
       },
       "has_changes_today": {
         "name": "Timetable changed today"
+      },
+      "school_holiday": {
+        "name": "School holiday"
       }
     },
     "calendar": {
       "timetable": {
         "name": "Timetable"
+      },
+      "school_calendar": {
+        "name": "School calendar"
       }
     }
   },

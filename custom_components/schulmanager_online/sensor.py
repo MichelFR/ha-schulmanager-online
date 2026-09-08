@@ -262,6 +262,7 @@ async def async_setup_entry(
         for description in SENSORS
     ]
     entities.append(SchulmanagerLettersSensor(coordinator, entry))
+    entities.append(SchulmanagerNextEventSensor(coordinator, entry))
     async_add_entities(entities)
 
 
@@ -311,3 +312,44 @@ class SchulmanagerLettersSensor(SchulmanagerEntity, SensorEntity):
     def native_value(self) -> int:
         """Return the number of unread letters."""
         return self.coordinator.data.unread_letters
+
+
+class SchulmanagerNextEventSensor(SchulmanagerEntity, SensorEntity):
+    """When the next school event starts, holidays excluded."""
+
+    _attr_translation_key = "next_school_event"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(
+        self, coordinator: SchulmanagerCoordinator, entry: SchulmanagerConfigEntry
+    ) -> None:
+        """Attach the sensor to the first student's device."""
+        super().__init__(coordinator, next(iter(coordinator.data.students)))
+        self._attr_unique_id = f"{entry.entry_id}_next_school_event"
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Return the start of the next event."""
+        event = self.coordinator.data.next_event(dt_util.now())
+        if event is None:
+            return None
+        if isinstance(event.start, datetime):
+            return event.start
+        return datetime.combine(
+            event.start, datetime.min.time(), tzinfo=dt_util.get_default_time_zone()
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Describe the next event, plus everything on today."""
+        now = dt_util.now()
+        event = self.coordinator.data.next_event(now)
+        data: dict[str, Any] = {
+            "today": [
+                item.as_attributes()
+                for item in self.coordinator.data.events_on(now.date())
+            ]
+        }
+        if event is not None:
+            data.update(event.as_attributes())
+        return data

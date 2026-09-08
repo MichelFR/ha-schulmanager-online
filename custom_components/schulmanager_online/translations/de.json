@@ -103,6 +103,9 @@
       },
       "unread_letters": {
         "name": "Ungelesene Elternbriefe"
+      },
+      "next_school_event": {
+        "name": "Nächster Schultermin"
       }
     },
     "binary_sensor": {
@@ -114,11 +117,17 @@
       },
       "has_changes_today": {
         "name": "Planabweichung heute"
+      },
+      "school_holiday": {
+        "name": "Ferien"
       }
     },
     "calendar": {
       "timetable": {
         "name": "Stundenplan"
+      },
+      "school_calendar": {
+        "name": "Schulkalender"
       }
     }
   },

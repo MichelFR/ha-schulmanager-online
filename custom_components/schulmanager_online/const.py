@@ -25,6 +25,16 @@ CONF_USER_DEVICE: Final = "user_device"
 TIMETABLE_DAYS_BEFORE: Final = 7
 TIMETABLE_DAYS_AFTER: Final = 28
 
+# The calendar module is not capped the way the timetable is, and school
+# events (trips, holidays, parents' evenings) are planned months ahead.
+CALENDAR_DAYS_BEFORE: Final = 14
+CALENDAR_DAYS_AFTER: Final = 180
+
+# The web app invents this category for holidays rather than the server
+# returning one, so holidays are recognised by its id.
+HOLIDAY_CATEGORY_ID: Final = -1
+HOLIDAY_CATEGORY_NAME: Final = "Ferien/Feiertage"
+
 # Window for the "upcoming exams" sensor.
 EXAM_LOOKAHEAD_DAYS: Final = 14
 

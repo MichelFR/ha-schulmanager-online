@@ -7,6 +7,7 @@ event per lesson, with substitutions and cancellations spelled out in the title.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from homeassistant.components.calendar import (
     CalendarEntity,
@@ -21,7 +22,7 @@ from .coordinator import (
     SchulmanagerCoordinator,
 )
 from .entity import SchulmanagerEntity
-from .model import Lesson
+from .model import Lesson, SchoolEvent
 
 
 async def async_setup_entry(
@@ -31,10 +32,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up one timetable calendar per student."""
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities: list[CalendarEntity] = [
         SchulmanagerCalendar(coordinator, student_id)
         for student_id in coordinator.data.students
-    )
+    ]
+    # The calendar module belongs to the account, not to one student.
+    entities.append(SchulmanagerEventCalendar(coordinator, entry))
+    async_add_entities(entities)
 
 
 class SchulmanagerCalendar(SchulmanagerEntity, CalendarEntity):
@@ -95,4 +99,78 @@ def _to_event(lesson: Lesson) -> CalendarEvent:
         summary=summary,
         location=lesson.room,
         description="\n".join(details),
+    )
+
+
+class SchulmanagerEventCalendar(SchulmanagerEntity, CalendarEntity):
+    """The school's own calendar: trips, parents' evenings, holidays."""
+
+    _attr_translation_key = "school_calendar"
+
+    def __init__(
+        self, coordinator: SchulmanagerCoordinator, entry: SchulmanagerConfigEntry
+    ) -> None:
+        """Attach the calendar to the first student's device."""
+        super().__init__(coordinator, next(iter(coordinator.data.students)))
+        self._attr_unique_id = f"{entry.entry_id}_school_calendar"
+
+    @property
+    def event(self) -> CalendarEvent | None:
+        """Return the next school event."""
+        now = dt_util.now()
+        today = now.date()
+        # An event running right now beats one that merely starts later.
+        ongoing = [
+            item
+            for item in self.coordinator.data.events_on(today)
+            if not item.is_holiday
+        ]
+        if ongoing:
+            return _event_to_calendar_event(ongoing[0])
+        upcoming = self.coordinator.data.next_event(now)
+        return _event_to_calendar_event(upcoming) if upcoming else None
+
+    async def async_get_events(
+        self, hass: HomeAssistant, start_date: datetime, end_date: datetime
+    ) -> list[CalendarEvent]:
+        """Return every school event overlapping the requested window."""
+        events = []
+        for item in self.coordinator.data.events:
+            start, end = _bounds(item, start_date.tzinfo)
+            if end <= start_date or start >= end_date:
+                continue
+            events.append(_event_to_calendar_event(item))
+        return events
+
+
+def _bounds(event: SchoolEvent, tzinfo: Any) -> tuple[datetime, datetime]:
+    """Return comparable datetime bounds for an event, all-day included."""
+    if isinstance(event.start, datetime):
+        start = event.start
+    else:
+        start = datetime.combine(event.start, datetime.min.time(), tzinfo=tzinfo)
+    if isinstance(event.end, datetime):
+        end = event.end
+    else:
+        end = datetime.combine(event.end, datetime.min.time(), tzinfo=tzinfo)
+    return start, end
+
+
+def _event_to_calendar_event(event: SchoolEvent) -> CalendarEvent:
+    """Render one school event as a calendar event."""
+    details = []
+    if event.category:
+        details.append(event.category)
+    if event.description:
+        details.append(event.description)
+    if event.organizer:
+        details.append(event.organizer)
+
+    return CalendarEvent(
+        start=event.start,
+        end=event.end,
+        summary=event.summary,
+        location=event.location,
+        description="\n".join(details) or None,
+        uid=event.uid,
     )

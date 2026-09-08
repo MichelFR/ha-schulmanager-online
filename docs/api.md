@@ -167,6 +167,54 @@ The bundle exposes ~676 endpoint names. The ones relevant here:
 Rate limits are announced per endpoint in `x-ratelimit-*`: 800 for `/api/calls`,
 but only 5 for the HTML entry point, so do not poll the login page.
 
+## The calendar module
+
+Separate from the timetable, and not subject to its 7-day cap. Module name
+`calendar`:
+
+| Endpoint | Parameters |
+| --- | --- |
+| `get-events-for-user` | `{ start, end, includeHolidays }` |
+| `get-event-categories` | `{}` |
+| `get-public-events` | `{ institutionId, start, end, includeHolidays }` (unauthenticated) |
+
+The answer is **split in two**, and the client is expected to do the work:
+
+```json
+{ "nonRecurringEvents": [ ... ], "recurringEvents": [ ... ] }
+```
+
+An event carries `id`, `summary`, `start`, `end`, `allDay`, `description`,
+`location`, `organizer` and `categoryId`. Categories come from
+`get-event-categories` — except holidays, which the **web app invents locally**
+as `{id: -1, name: "Ferien/Feiertage"}` rather than the server returning one, so
+holidays are recognised by that id.
+
+All-day events arrive as UTC midnight and the web app shifts them by the
+viewer's offset purely so they render on the right day; taking the UTC date is
+equivalent and less fragile. The API's all-day end is *inclusive*, while Home
+Assistant wants it exclusive, so one day is added.
+
+### Recurrence
+
+`recurringEvents` each carry a `recurrencePattern`:
+
+```
+{ frequency: "Daily" | "Weekly" | "Monthly" | "Yearly",
+  interval: <int>, start: <date>, end: <date|null>,
+  monthday?: <int>, weekday?: <0-6, Sunday = 0>, weekdayInMonth?: <int> }
+```
+
+Expansion walks from `start`, applying the step `interval` times per
+occurrence, until `end` — or five years out when `end` is null, which is the cap
+the web app uses. `Monthly` has two forms: by `monthday`, or "the nth weekday of
+the month", which is computed by jumping to the first of the next month and
+walking forward to the weekday. Note `weekday` is JavaScript's `getDay()`, so
+Sunday is 0 — not Python's Monday-is-0.
+
+Each occurrence needs its own uid or Home Assistant collapses the series into
+one event.
+
 ## Testing
 
 `tools/smo_cli.py` drives the same client the integration uses. Run it with no

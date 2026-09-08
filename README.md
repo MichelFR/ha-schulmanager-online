@@ -62,13 +62,27 @@ One device per student, plus a shared letters sensor.
 | `sensor.…_open_homework` | Open homework count, with the list in attributes |
 | `sensor.…_homework_due_tomorrow` | What has to be done tonight |
 | `sensor.…_unread_letters` | Unread letters on the account |
+| `sensor.…_next_school_event` | Start of the next calendar entry; today's entries in attributes |
 | `binary_sensor.…_school_today` | Whether there are any lessons today |
 | `binary_sensor.…_at_school` | Between the first and last lesson |
 | `binary_sensor.…_timetable_changed_today` | Something deviates from the plan |
+| `binary_sensor.…_school_holiday` | Today falls in a holiday or public holiday |
 | `calendar.…_timetable` | The timetable as a calendar; cancellations marked ❌, substitutions ↷ |
+| `calendar.…_school_calendar` | The school's own calendar — trips, parents' evenings, holidays |
 
 Breaks arrive as lessons with a pseudo subject (`PAUSE`); they appear on the
 calendar but never count as a lesson or as "next lesson".
+
+### How far ahead the data goes
+
+The **timetable** is capped by the server at **today plus 7 days**, and it
+returns nothing for past days — asking for a wider range changes nothing. The
+**school calendar** is not capped that way, so it is fetched for 14 days back
+and 180 days ahead, which covers trips and holidays planned a term in advance.
+
+`binary_sensor.…_school_holiday` is the useful one for automations — a
+condition that suppresses the 06:30 alarm through the Ferien without
+maintaining a date list by hand.
 
 ### Automation ideas
 

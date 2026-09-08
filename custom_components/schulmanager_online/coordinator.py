@@ -17,7 +17,15 @@ from homeassistant.util import dt as dt_util
 
 from .api import SchulmanagerAuthError, SchulmanagerClient, SchulmanagerError
 from .const import DEFAULT_SCAN_INTERVAL_MINUTES, DOMAIN
-from .model import Lesson, parse_class_hours, parse_lessons, student_name
+from .model import (
+    Lesson,
+    SchoolEvent,
+    parse_class_hours,
+    parse_event_categories,
+    parse_events,
+    parse_lessons,
+    student_name,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,6 +82,26 @@ class SchulmanagerData:
 
     students: dict[str, StudentData] = field(default_factory=dict)
     letters: list[dict[str, Any]] = field(default_factory=list)
+    events: list[SchoolEvent] = field(default_factory=list)
+
+    def events_on(self, day: date) -> list[SchoolEvent]:
+        """Return every school event covering one day."""
+        return [event for event in self.events if event.covers(day)]
+
+    def holiday_on(self, day: date) -> SchoolEvent | None:
+        """Return the holiday covering one day, if any."""
+        return next((event for event in self.events_on(day) if event.is_holiday), None)
+
+    def next_event(self, now: datetime) -> SchoolEvent | None:
+        """Return the next event that has not started yet."""
+        upcoming = [
+            event
+            for event in self.events
+            if _event_start(event, now.tzinfo) > now and not event.is_holiday
+        ]
+        return min(
+            upcoming, key=lambda event: _event_start(event, now.tzinfo), default=None
+        )
 
     @property
     def unread_letters(self) -> int:
@@ -151,4 +179,34 @@ class SchulmanagerCoordinator(DataUpdateCoordinator[SchulmanagerData]):
                 homework=payload.get("homework") or [],
             )
 
-        return SchulmanagerData(students=students, letters=raw.get("letters") or [])
+        window = raw.get("calendar_window") or []
+        window_start = _as_date(window[0]) if len(window) > 0 else None
+        window_end = _as_date(window[1]) if len(window) > 1 else None
+
+        return SchulmanagerData(
+            students=students,
+            letters=raw.get("letters") or [],
+            events=parse_events(
+                raw.get("events"),
+                parse_event_categories(raw.get("event_categories")),
+                window_start,
+                window_end,
+            ),
+        )
+
+
+def _as_date(value: Any) -> date | None:
+    """Parse an ISO date, tolerating anything else."""
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value[:10])
+    except ValueError:
+        return None
+
+
+def _event_start(event: SchoolEvent, tzinfo: Any) -> datetime:
+    """Return a comparable start for an event, all-day included."""
+    if isinstance(event.start, datetime):
+        return event.start
+    return datetime.combine(event.start, datetime.min.time(), tzinfo=tzinfo)

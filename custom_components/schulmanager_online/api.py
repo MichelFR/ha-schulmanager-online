@@ -19,7 +19,12 @@ from urllib.parse import quote, unquote, urlencode
 
 from aiohttp import ClientError, ClientResponse, ClientSession
 
-from .const import TIMETABLE_DAYS_AFTER, TIMETABLE_DAYS_BEFORE
+from .const import (
+    CALENDAR_DAYS_AFTER,
+    CALENDAR_DAYS_BEFORE,
+    TIMETABLE_DAYS_AFTER,
+    TIMETABLE_DAYS_BEFORE,
+)
 from .model import students_of
 
 _LOGGER = logging.getLogger(__name__)
@@ -469,9 +474,26 @@ class SchulmanagerClient:
                 "administrator logins are not supported"
             )
 
+        calendar_start = (today - timedelta(days=CALENDAR_DAYS_BEFORE)).isoformat()
+        calendar_end = (today + timedelta(days=CALENDAR_DAYS_AFTER)).isoformat()
+
         shared = [
             {"moduleName": None, "endpointName": "get-class-hours", "parameters": {}},
             {"moduleName": None, "endpointName": "get-letters", "parameters": {}},
+            {
+                "moduleName": "calendar",
+                "endpointName": "get-events-for-user",
+                "parameters": {
+                    "start": calendar_start,
+                    "end": calendar_end,
+                    "includeHolidays": True,
+                },
+            },
+            {
+                "moduleName": "calendar",
+                "endpointName": "get-event-categories",
+                "parameters": {},
+            },
         ]
         per_student = [
             request
@@ -503,16 +525,21 @@ class SchulmanagerClient:
             )
         ]
 
+        shared_count = len(shared)
         results = await self.async_call_batch_lenient(shared + per_student)
-        class_hours_raw, letters = results[0], results[1]
+        class_hours_raw, letters, events, categories = results[:shared_count]
 
         data: dict[str, Any] = {
             "class_hours": class_hours_raw or [],
             "letters": letters or [],
+            "events": events or {},
+            "event_categories": categories or [],
+            "calendar_window": [calendar_start, calendar_end],
             "students": {},
         }
         for index, student in enumerate(students):
-            lessons, exams, homework = results[2 + index * 3 : 5 + index * 3]
+            offset = shared_count + index * 3
+            lessons, exams, homework = results[offset : offset + 3]
             data["students"][str(student["id"])] = {
                 "info": student,
                 "lessons": lessons or [],
