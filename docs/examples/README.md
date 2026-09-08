@@ -61,3 +61,39 @@ critical alert does that, and that one would beep.
 
 The alert also ignores the transition out of `unknown`, or it would re-announce
 every change on each Home Assistant restart.
+
+## The seven automations actually deployed
+
+All in the *Benachrichtigungen* category. `automations.yaml` in this directory
+holds the first two in full; the rest follow the same shape.
+
+| Automation | Trigger | To |
+| --- | --- | --- |
+| Aktuelle Stunde Live Activity | `aktuelle_stunde` changes | iPhone |
+| Vertretung oder Ausfall | `planabweichungen_heute` / `_morgen` rise | iPhone + iPad |
+| Morgen-Briefing | 06:45, only on school days | iPhone + iPad |
+| Abend-Briefing | 19:30, only if there is something to say | iPhone + iPad |
+| Neuer Elternbrief | `ungelesene_elternbriefe` above 0 | both parents |
+| Unentschuldigte Fehlstunden | value rises | parent |
+| Neuer Klassenbucheintrag | value rises | parent |
+
+### Two rules worth copying
+
+**Every state-triggered alert carries a 07:00–21:00 time condition.** Polling
+is every five minutes, so without it a change published at 03:00 buzzes a phone
+at 03:00.
+
+**Every one ignores the transition out of `unknown`.** On a Home Assistant
+restart each sensor goes `unknown` → value, which without the guard
+re-announces every outstanding change as if it were new.
+
+### On the template conditions
+
+The best-practice checker flags `condition: template` and it is right to — an
+OR of three numeric comparisons in the Abend-Briefing was rewritten as a native
+`condition: or` of `numeric_state`. The remaining templates compare
+`trigger.from_state` with `trigger.to_state` to detect a *rise* and to ignore
+attribute-only changes; neither has a native equivalent, so they stay.
+
+That last point also protects the Live Activity: a plain state trigger fires on
+attribute changes too, and iOS's push-to-start budget is finite.
