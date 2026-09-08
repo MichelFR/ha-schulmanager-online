@@ -18,8 +18,11 @@ from homeassistant.util import dt as dt_util
 from .api import SchulmanagerAuthError, SchulmanagerClient, SchulmanagerError
 from .const import DEFAULT_SCAN_INTERVAL_MINUTES, DOMAIN
 from .model import (
+    AbsenceStatistics,
     Lesson,
     SchoolEvent,
+    count_classbook_entries,
+    parse_absence_statistics,
     parse_class_hours,
     parse_event_categories,
     parse_events,
@@ -42,6 +45,8 @@ class StudentData:
     lessons: list[Lesson] = field(default_factory=list)
     exams: list[dict[str, Any]] = field(default_factory=list)
     homework: list[dict[str, Any]] = field(default_factory=list)
+    absence: AbsenceStatistics = field(default_factory=AbsenceStatistics)
+    classbook_entries: int | None = None
 
     def lessons_on(self, day: date) -> list[Lesson]:
         """Return every timetable entry for one day, breaks included."""
@@ -177,6 +182,14 @@ class SchulmanagerCoordinator(DataUpdateCoordinator[SchulmanagerData]):
                 lessons=parse_lessons(payload.get("lessons"), class_hours, tzinfo),
                 exams=payload.get("exams") or [],
                 homework=payload.get("homework") or [],
+                absence=parse_absence_statistics(
+                    payload.get("absence_by_subject"),
+                    payload.get("unexcused_by_subject"),
+                    payload.get("absence_days"),
+                ),
+                classbook_entries=count_classbook_entries(
+                    payload.get("classbook_entries")
+                ),
             )
 
         window = raw.get("calendar_window") or []

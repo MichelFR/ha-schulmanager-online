@@ -215,6 +215,34 @@ Sunday is 0 — not Python's Monday-is-0.
 Each occurrence needs its own uid or Home Assistant collapses the series into
 one event.
 
+## The classbook module
+
+Module name `classbook`. Statistics are per term, so `get-current-term` has to
+resolve first — which is why the integration uses two batched round trips
+rather than one.
+
+| Endpoint | Parameters |
+| --- | --- |
+| `get-current-term` | `{}` → `{id, start, end}` |
+| `get-statistics` | `{student, from, until, type, by, unexcusedOnly, includeInternalExemptions}` |
+| `get-student-absence-statistic` | `{studentId, start, end}` → `{absentDays, unexcusedDays, …}` |
+| `get-entry-statistics` | `{student, termId}` |
+| `get-history-absences-list` | `{term, student}` |
+
+`type` is one of `sum-all`, `count-absent`, `count-belated`; `by` is `subject`
+or `time` (the per-period grid in the report).
+
+**There is no total.** Rows come back as `{subject: {name}, absentLessons,
+totalLessons}` and the web app sums them itself to produce the headline
+"0,0 % (0,00 / 30 Std.)" figure — so the integration derives it the same way.
+Unexcused time is a *second* call with `unexcusedOnly: true`, not a field on the
+first.
+
+A row with no subject is rendered as "Ohne Fach" in the UI.
+
+Note the `absencesVisibilityDelayForParents` setting: a school can delay how
+soon parents see an absence, so these figures can legitimately lag.
+
 ## Testing
 
 `tools/smo_cli.py` drives the same client the integration uses. Run it with no

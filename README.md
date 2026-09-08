@@ -59,6 +59,10 @@ One device per student, plus a shared letters sensor.
 | `sensor.…_timetable_changes_today` / `_tomorrow` | Cancellations and substitutions, with before/after detail |
 | `sensor.…_upcoming_exams` | Exams in the next 14 days; all known exams in attributes |
 | `sensor.…_next_exam` | Date of the next exam |
+| `sensor.…_absence_rate` | Share of lessons missed this term, per-subject breakdown in attributes |
+| `sensor.…_absent_lessons` / `_unexcused_lessons` | Missed lessons this term, and how many are unexcused |
+| `sensor.…_absent_days` | Missed days this term; unexcused days in attributes |
+| `sensor.…_classbook_entries` | Classbook entries this term |
 | `sensor.…_open_homework` | Open homework count, with the list in attributes |
 | `sensor.…_homework_due_tomorrow` | What has to be done tonight |
 | `sensor.…_unread_letters` | Unread letters on the account |

@@ -106,6 +106,21 @@
       },
       "next_school_event": {
         "name": "Nächster Schultermin"
+      },
+      "absence_rate": {
+        "name": "Abwesenheitsquote"
+      },
+      "absent_lessons": {
+        "name": "Fehlstunden"
+      },
+      "unexcused_lessons": {
+        "name": "Unentschuldigte Fehlstunden"
+      },
+      "absent_days": {
+        "name": "Fehltage"
+      },
+      "classbook_entries": {
+        "name": "Klassenbucheinträge"
       }
     },
     "binary_sensor": {

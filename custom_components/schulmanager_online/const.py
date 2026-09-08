@@ -35,6 +35,10 @@ CALENDAR_DAYS_AFTER: Final = 180
 HOLIDAY_CATEGORY_ID: Final = -1
 HOLIDAY_CATEGORY_NAME: Final = "Ferien/Feiertage"
 
+# Classbook statistics are reported per term, so the term has to be fetched
+# before they can be asked for.
+CLASSBOOK_STATISTIC_TYPE: Final = "sum-all"
+
 # Window for the "upcoming exams" sensor.
 EXAM_LOOKAHEAD_DAYS: Final = 14
 

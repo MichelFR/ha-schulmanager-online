@@ -106,6 +106,21 @@
       },
       "next_school_event": {
         "name": "Next school event"
+      },
+      "absence_rate": {
+        "name": "Absence rate"
+      },
+      "absent_lessons": {
+        "name": "Absent lessons"
+      },
+      "unexcused_lessons": {
+        "name": "Unexcused lessons"
+      },
+      "absent_days": {
+        "name": "Absent days"
+      },
+      "classbook_entries": {
+        "name": "Classbook entries"
       }
     },
     "binary_sensor": {

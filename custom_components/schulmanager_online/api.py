@@ -22,6 +22,7 @@ from aiohttp import ClientError, ClientResponse, ClientSession
 from .const import (
     CALENDAR_DAYS_AFTER,
     CALENDAR_DAYS_BEFORE,
+    CLASSBOOK_STATISTIC_TYPE,
     TIMETABLE_DAYS_AFTER,
     TIMETABLE_DAYS_BEFORE,
 )
@@ -494,7 +495,19 @@ class SchulmanagerClient:
                 "endpointName": "get-event-categories",
                 "parameters": {},
             },
+            {
+                "moduleName": "classbook",
+                "endpointName": "get-current-term",
+                "parameters": {},
+            },
         ]
+        shared_results = await self.async_call_batch_lenient(shared)
+        class_hours_raw, letters, events, categories, term = shared_results
+
+        term = term if isinstance(term, dict) else {}
+        term_start = term.get("start") or start
+        term_id = term.get("id")
+
         per_student = [
             request
             for student in students
@@ -522,29 +535,86 @@ class SchulmanagerClient:
                     "endpointName": "get-homework",
                     "parameters": {"student": {"id": student["id"]}},
                 },
+                # The web app sums the per-subject rows to get the overall
+                # absence figure, so only this one call is needed for both.
+                {
+                    "moduleName": "classbook",
+                    "endpointName": "get-statistics",
+                    "parameters": {
+                        "student": {"id": student["id"]},
+                        "from": term_start,
+                        "until": today.isoformat(),
+                        "type": CLASSBOOK_STATISTIC_TYPE,
+                        "by": "subject",
+                        "unexcusedOnly": False,
+                        "includeInternalExemptions": False,
+                    },
+                },
+                {
+                    "moduleName": "classbook",
+                    "endpointName": "get-statistics",
+                    "parameters": {
+                        "student": {"id": student["id"]},
+                        "from": term_start,
+                        "until": today.isoformat(),
+                        "type": CLASSBOOK_STATISTIC_TYPE,
+                        "by": "subject",
+                        "unexcusedOnly": True,
+                        "includeInternalExemptions": False,
+                    },
+                },
+                {
+                    "moduleName": "classbook",
+                    "endpointName": "get-student-absence-statistic",
+                    "parameters": {
+                        "studentId": student["id"],
+                        "start": term_start,
+                        "end": today.isoformat(),
+                    },
+                },
+                {
+                    "moduleName": "classbook",
+                    "endpointName": "get-entry-statistics",
+                    "parameters": {
+                        "student": {"id": student["id"]},
+                        "termId": term_id,
+                    },
+                },
             )
         ]
 
-        shared_count = len(shared)
-        results = await self.async_call_batch_lenient(shared + per_student)
-        class_hours_raw, letters, events, categories = results[:shared_count]
+        results = await self.async_call_batch_lenient(per_student)
 
         data: dict[str, Any] = {
             "class_hours": class_hours_raw or [],
             "letters": letters or [],
             "events": events or {},
             "event_categories": categories or [],
+            "term": term,
             "calendar_window": [calendar_start, calendar_end],
             "students": {},
         }
+        per_student_calls = 7
         for index, student in enumerate(students):
-            offset = shared_count + index * 3
-            lessons, exams, homework = results[offset : offset + 3]
+            offset = index * per_student_calls
+            (
+                lessons,
+                exams,
+                homework,
+                absence_by_subject,
+                unexcused_by_subject,
+                absence_days,
+                entries,
+            ) = results[offset : offset + per_student_calls]
             data["students"][str(student["id"])] = {
                 "info": student,
                 "lessons": lessons or [],
                 "exams": exams or [],
                 "homework": homework or [],
+                "absence_by_subject": absence_by_subject or [],
+                "unexcused_by_subject": unexcused_by_subject or [],
+                "absence_days": absence_days or {},
+                "classbook_entries": entries,
             }
         return data
 

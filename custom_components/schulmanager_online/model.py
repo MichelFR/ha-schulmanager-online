@@ -535,3 +535,126 @@ def parse_events(
 def _event_sort_key(event: SchoolEvent) -> tuple[date, int, str]:
     """Sort by day, all-day first, then title."""
     return (day_of(event.start), 0 if event.all_day else 1, event.summary)
+
+
+# --------------------------------------------------------------------------- #
+# classbook module
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True)
+class AbsenceStatistics:
+    """Absence figures for one student over the current term.
+
+    The web app never asks the server for a total: it sums the per-subject rows
+    it already has, which is what ``from_rows`` reproduces.
+    """
+
+    absent_lessons: float = 0.0
+    total_lessons: float = 0.0
+    unexcused_lessons: float = 0.0
+    absent_days: float = 0.0
+    unexcused_days: float = 0.0
+    by_subject: list[dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def rate(self) -> float:
+        """Return the share of lessons missed, as a percentage."""
+        if self.total_lessons <= 0:
+            return 0.0
+        return round(self.absent_lessons / self.total_lessons * 100, 2)
+
+    def as_attributes(self) -> dict[str, Any]:
+        """Render the detail behind the headline figure."""
+        return {
+            "absent_lessons": self.absent_lessons,
+            "total_lessons": self.total_lessons,
+            "unexcused_lessons": self.unexcused_lessons,
+            "absent_days": self.absent_days,
+            "unexcused_days": self.unexcused_days,
+            "by_subject": self.by_subject,
+        }
+
+
+def _number(value: Any) -> float:
+    """Coerce a statistic to a number, tolerating null and strings."""
+    if isinstance(value, bool) or value is None:
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _subject_rows(raw: Any) -> list[dict[str, Any]]:
+    """Flatten the per-subject statistic rows, worst attendance first."""
+    rows: list[dict[str, Any]] = []
+    for entry in raw or []:
+        if not isinstance(entry, dict):
+            continue
+        subject = entry.get("subject")
+        name = subject.get("name") if isinstance(subject, dict) else subject
+        absent = _number(entry.get("absentLessons"))
+        total = _number(entry.get("totalLessons"))
+        rows.append(
+            {
+                "subject": name or "Ohne Fach",
+                "absent_lessons": absent,
+                "total_lessons": total,
+                "rate": round(absent / total * 100, 2) if total > 0 else 0.0,
+            }
+        )
+    rows.sort(key=lambda row: (-row["rate"], str(row["subject"])))
+    return rows
+
+
+def parse_absence_statistics(
+    by_subject: Any, unexcused_by_subject: Any, absence_days: Any
+) -> AbsenceStatistics:
+    """Build the absence view from the three classbook payloads."""
+    rows = _subject_rows(by_subject)
+    days = absence_days if isinstance(absence_days, dict) else {}
+    return AbsenceStatistics(
+        absent_lessons=round(sum(row["absent_lessons"] for row in rows), 2),
+        total_lessons=round(sum(row["total_lessons"] for row in rows), 2),
+        unexcused_lessons=round(
+            sum(row["absent_lessons"] for row in _subject_rows(unexcused_by_subject)),
+            2,
+        ),
+        absent_days=_number(days.get("absentDays")),
+        unexcused_days=_number(days.get("unexcusedDays")),
+        by_subject=rows,
+    )
+
+
+def count_classbook_entries(raw: Any) -> int | None:
+    """Count classbook entries, whatever shape the statistics come back in.
+
+    ``get-entry-statistics`` was not observed against a live account, so this
+    accepts a list, a plain number, or a mapping of counts, and reports None
+    when it cannot tell — which keeps the sensor unavailable rather than
+    confidently wrong.
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, int | float):
+        return int(raw)
+    if isinstance(raw, list):
+        return len(raw)
+    if isinstance(raw, dict):
+        for key in ("count", "total", "numberOfEntries", "entries"):
+            value = raw.get(key)
+            if isinstance(value, int | float) and not isinstance(value, bool):
+                return int(value)
+            if isinstance(value, list):
+                return len(value)
+        numbers = [
+            value
+            for value in raw.values()
+            if isinstance(value, int | float) and not isinstance(value, bool)
+        ]
+        if numbers:
+            return int(sum(numbers))
+    return None

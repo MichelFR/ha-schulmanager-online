@@ -13,6 +13,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -224,6 +225,40 @@ SENSORS: tuple[SchulmanagerSensorDescription, ...] = (
             (_exam_summary(exam) for exam in _upcoming_exams(student, now.date())),
             None,
         ),
+    ),
+    SchulmanagerSensorDescription(
+        key="absence_rate",
+        translation_key="absence_rate",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda student, now: student.absence.rate,
+        attr_fn=lambda student, now: student.absence.as_attributes(),
+    ),
+    SchulmanagerSensorDescription(
+        key="absent_lessons",
+        translation_key="absent_lessons",
+        state_class=SensorStateClass.TOTAL,
+        value_fn=lambda student, now: student.absence.absent_lessons,
+        attr_fn=lambda student, now: {"by_subject": student.absence.by_subject},
+    ),
+    SchulmanagerSensorDescription(
+        key="unexcused_lessons",
+        translation_key="unexcused_lessons",
+        state_class=SensorStateClass.TOTAL,
+        value_fn=lambda student, now: student.absence.unexcused_lessons,
+    ),
+    SchulmanagerSensorDescription(
+        key="absent_days",
+        translation_key="absent_days",
+        state_class=SensorStateClass.TOTAL,
+        value_fn=lambda student, now: student.absence.absent_days,
+        attr_fn=lambda student, now: {"unexcused_days": student.absence.unexcused_days},
+    ),
+    SchulmanagerSensorDescription(
+        key="classbook_entries",
+        translation_key="classbook_entries",
+        state_class=SensorStateClass.TOTAL,
+        value_fn=lambda student, now: student.classbook_entries,
     ),
     SchulmanagerSensorDescription(
         key="open_homework",
