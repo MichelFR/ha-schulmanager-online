@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientSession
 
 API_BASE = "https://login.schulmanager-online.de/api"
 

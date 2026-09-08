@@ -1,7 +1,7 @@
 target-version = "py312"
 
 [lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM", "D", "ASYNC", "RUF"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "D", "BLE", "ASYNC", "RUF"]
 
 [lint.pydocstyle]
 convention = "pep257"
