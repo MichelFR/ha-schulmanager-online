@@ -2,33 +2,80 @@
   "config": {
     "step": {
       "user": {
-        "description": "Melde dich mit deinem Schulmanager-Online-Konto an.",
+        "title": "Wie möchten Sie sich anmelden?",
+        "menu_options": {
+          "credentials": "E-Mail und Passwort",
+          "pick_school": "Zuerst Schule auswählen (für Single-Sign-On)"
+        }
+      },
+      "pick_school": {
+        "title": "Schule finden",
+        "description": "Suche nach Name, Ort oder Postleitzahl.",
+        "data": { "query": "Suche" }
+      },
+      "select_school": {
+        "title": "Schule auswählen",
+        "data": { "school": "Schule" }
+      },
+      "login_method": {
+        "title": "Wie möchten Sie sich anmelden?",
+        "description": "Ihre Schule unterstützt Single-Sign-On.",
+        "data": { "method": "Anmeldeverfahren" }
+      },
+      "sso": {
+        "title": "Anmelden mit {provider}",
+        "description": "1. Öffnen Sie diesen Link und melden Sie sich an:\n\n{url}\n\n2. Sie landen auf einer leeren oder Fehlerseite. Kopieren Sie die vollständige Adresse aus der Adressleiste und fügen Sie sie unten ein — darin steckt die Anmeldeinformation für Home Assistant.",
+        "data": { "redirect_url": "Adresse, auf der Sie gelandet sind" }
+      },
+      "credentials": {
+        "description": "Melden Sie sich mit Ihrem Schulmanager-Online-Konto an.",
         "data": {
-          "email": "E-Mail",
+          "email": "E-Mail oder Benutzername",
           "password": "Passwort"
         }
       },
       "reauth_confirm": {
-        "description": "Dein Schulmanager-Online-Passwort ist nicht mehr gültig.",
-        "data": {
-          "password": "Passwort"
-        }
+        "description": "Ihr Passwort für Schulmanager Online ist nicht mehr gültig.",
+        "data": { "password": "Passwort" }
       }
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
-      "invalid_auth": "Ungültige Anmeldedaten",
+      "invalid_auth": "E-Mail-Adresse oder Passwort sind falsch",
+      "invalid_user_device": "Diese Adresse enthält keine Anmeldeinformation. Kopieren Sie die Adresse, auf der Sie am Ende gelandet sind.",
+      "multiple_accounts": "Dieses Konto existiert an mehreren Schulen. Gehen Sie zurück und wählen Sie zuerst Ihre Schule aus.",
+      "no_schools_found": "Keine Schule gefunden. Versuchen Sie eine kürzere Suche.",
+      "two_factor_unsupported": "Dieses Konto nutzt Zwei-Faktor-Authentifizierung, die noch nicht unterstützt wird.",
       "unknown": "Unerwarteter Fehler"
     },
     "abort": {
       "already_configured": "Dieses Konto ist bereits eingerichtet",
-      "reauth_successful": "Erneute Anmeldung erfolgreich"
+      "reauth_successful": "Die erneute Anmeldung war erfolgreich"
     }
   },
   "entity": {
     "sensor": {
+      "current_lesson": { "name": "Aktuelle Stunde" },
+      "next_lesson": { "name": "Nächste Stunde" },
+      "next_lesson_start": { "name": "Nächste Stunde beginnt" },
+      "lessons_today": { "name": "Stunden heute" },
+      "school_start": { "name": "Schulbeginn" },
+      "school_end": { "name": "Schulende" },
+      "changes_today": { "name": "Planabweichungen heute" },
+      "changes_tomorrow": { "name": "Planabweichungen morgen" },
+      "upcoming_exams": { "name": "Anstehende Klassenarbeiten" },
+      "next_exam": { "name": "Nächste Klassenarbeit" },
       "open_homework": { "name": "Offene Hausaufgaben" },
-      "upcoming_exams": { "name": "Anstehende Klassenarbeiten" }
+      "homework_due_tomorrow": { "name": "Hausaufgaben für morgen" },
+      "unread_letters": { "name": "Ungelesene Elternbriefe" }
+    },
+    "binary_sensor": {
+      "school_today": { "name": "Schule heute" },
+      "at_school": { "name": "In der Schule" },
+      "has_changes_today": { "name": "Planabweichung heute" }
+    },
+    "calendar": {
+      "timetable": { "name": "Stundenplan" }
     }
   }
 }

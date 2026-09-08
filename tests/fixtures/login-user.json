@@ -1,0 +1,23 @@
+{
+  "associatedParents": [],
+  "associatedStudent": {
+    "birthday": "2010-04-05",
+    "classId": 999,
+    "firstname": "Alex",
+    "id": 1001,
+    "isFullAged": null,
+    "lastname": "Muster",
+    "sex": ""
+  },
+  "associatedTeachers": [],
+  "email": "alex.muster@example.com",
+  "firstname": "Alex",
+  "id": 42,
+  "institutionId": 1234,
+  "lastname": "Muster",
+  "ldapUsername": null,
+  "localUsername": null,
+  "logodidactUsername": null,
+  "roles": null,
+  "username": null
+}

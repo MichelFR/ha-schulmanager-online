@@ -6,7 +6,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import SchulmanagerCoordinator
+from .coordinator import SchulmanagerCoordinator, StudentData
 
 
 class SchulmanagerEntity(CoordinatorEntity[SchulmanagerCoordinator]):
@@ -22,6 +22,15 @@ class SchulmanagerEntity(CoordinatorEntity[SchulmanagerCoordinator]):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, student_id)},
             manufacturer="Schulmanager Online",
-            name=f"Schulmanager {student_id}",
-            entry_type=None,
+            name=self.student.name,
         )
+
+    @property
+    def student(self) -> StudentData:
+        """Return this entity's student."""
+        return self.coordinator.data.students[self._student_id]
+
+    @property
+    def available(self) -> bool:
+        """Only report available while the student is still in the payload."""
+        return super().available and self._student_id in self.coordinator.data.students

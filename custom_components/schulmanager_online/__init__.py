@@ -7,9 +7,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SchulmanagerClient
+from .const import CONF_INSTITUTION_ID, CONF_USER_DEVICE
 from .coordinator import SchulmanagerConfigEntry, SchulmanagerCoordinator
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+    Platform.SENSOR,
+]
 
 
 async def async_setup_entry(
@@ -18,9 +23,13 @@ async def async_setup_entry(
     """Set up Schulmanager Online from a config entry."""
     client = SchulmanagerClient(
         async_get_clientsession(hass),
-        entry.data[CONF_EMAIL],
-        entry.data[CONF_PASSWORD],
+        entry.data.get(CONF_EMAIL, ""),
+        entry.data.get(CONF_PASSWORD, ""),
+        institution_id=entry.data.get(CONF_INSTITUTION_ID),
     )
+    # Single sign-on entries have no password, only this.
+    client.user_device = entry.data.get(CONF_USER_DEVICE)
+
     coordinator = SchulmanagerCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
 
