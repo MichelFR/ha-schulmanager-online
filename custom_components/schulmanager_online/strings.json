@@ -11,21 +11,29 @@
       "pick_school": {
         "title": "Find your school",
         "description": "Search by name, city or postcode.",
-        "data": { "query": "Search" }
+        "data": {
+          "query": "Search"
+        }
       },
       "select_school": {
         "title": "Select your school",
-        "data": { "school": "School" }
+        "data": {
+          "school": "School"
+        }
       },
       "login_method": {
         "title": "How do you want to sign in?",
         "description": "Your school supports single sign-on.",
-        "data": { "method": "Sign-in method" }
+        "data": {
+          "method": "Sign-in method"
+        }
       },
       "sso": {
         "title": "Sign in with {provider}",
         "description": "1. Open this link and sign in:\n\n{url}\n\n2. You will end up on a blank or error page. Copy the full address from your browser's address bar and paste it below — it contains the credential Home Assistant needs.",
-        "data": { "redirect_url": "Address you landed on" }
+        "data": {
+          "redirect_url": "Address you landed on"
+        }
       },
       "credentials": {
         "description": "Log in with your Schulmanager Online account.",
@@ -36,7 +44,9 @@
       },
       "reauth_confirm": {
         "description": "Your Schulmanager Online password is no longer valid.",
-        "data": { "password": "Password" }
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -55,27 +65,72 @@
   },
   "entity": {
     "sensor": {
-      "current_lesson": { "name": "Current lesson" },
-      "next_lesson": { "name": "Next lesson" },
-      "next_lesson_start": { "name": "Next lesson starts" },
-      "lessons_today": { "name": "Lessons today" },
-      "school_start": { "name": "School starts" },
-      "school_end": { "name": "School ends" },
-      "changes_today": { "name": "Timetable changes today" },
-      "changes_tomorrow": { "name": "Timetable changes tomorrow" },
-      "upcoming_exams": { "name": "Upcoming exams" },
-      "next_exam": { "name": "Next exam" },
-      "open_homework": { "name": "Open homework" },
-      "homework_due_tomorrow": { "name": "Homework due tomorrow" },
-      "unread_letters": { "name": "Unread letters" }
+      "current_lesson": {
+        "name": "Current lesson"
+      },
+      "next_lesson": {
+        "name": "Next lesson"
+      },
+      "next_lesson_start": {
+        "name": "Next lesson starts"
+      },
+      "lessons_today": {
+        "name": "Lessons today"
+      },
+      "school_start": {
+        "name": "School starts"
+      },
+      "school_end": {
+        "name": "School ends"
+      },
+      "changes_today": {
+        "name": "Timetable changes today"
+      },
+      "changes_tomorrow": {
+        "name": "Timetable changes tomorrow"
+      },
+      "upcoming_exams": {
+        "name": "Upcoming exams"
+      },
+      "next_exam": {
+        "name": "Next exam"
+      },
+      "open_homework": {
+        "name": "Open homework"
+      },
+      "homework_due_tomorrow": {
+        "name": "Homework due tomorrow"
+      },
+      "unread_letters": {
+        "name": "Unread letters"
+      }
     },
     "binary_sensor": {
-      "school_today": { "name": "School today" },
-      "at_school": { "name": "At school" },
-      "has_changes_today": { "name": "Timetable changed today" }
+      "school_today": {
+        "name": "School today"
+      },
+      "at_school": {
+        "name": "At school"
+      },
+      "has_changes_today": {
+        "name": "Timetable changed today"
+      }
     },
     "calendar": {
-      "timetable": { "name": "Timetable" }
+      "timetable": {
+        "name": "Timetable"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "How often to check Schulmanager Online, in minutes. Five minutes keeps a cancelled first period useful on the morning it happens; raise it if you would rather poll less.",
+        "data": {
+          "scan_interval": "Update interval (minutes)"
+        }
+      }
     }
   }
 }

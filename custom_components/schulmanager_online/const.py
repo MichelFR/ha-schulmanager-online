@@ -7,7 +7,13 @@ from typing import Final
 
 DOMAIN: Final = "schulmanager_online"
 
-DEFAULT_SCAN_INTERVAL: Final = timedelta(minutes=30)
+# Five minutes keeps a cancelled first period useful on the morning it
+# happens. At one batched request per poll that is ~290 calls a day against
+# the 800 the API allows, so there is plenty of headroom.
+DEFAULT_SCAN_INTERVAL_MINUTES: Final = 5
+DEFAULT_SCAN_INTERVAL: Final = timedelta(minutes=DEFAULT_SCAN_INTERVAL_MINUTES)
+MIN_SCAN_INTERVAL_MINUTES: Final = 1
+MAX_SCAN_INTERVAL_MINUTES: Final = 1440
 
 # The config entry stores either a password or a user device (single sign-on
 # accounts have no password to store).

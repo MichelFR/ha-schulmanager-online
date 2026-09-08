@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.schulmanager_online.const import DOMAIN
@@ -134,3 +137,70 @@ async def test_unload(hass: HomeAssistant, entry, raw_payload) -> None:
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_default_scan_interval_is_five_minutes(
+    hass: HomeAssistant, entry, raw_payload
+) -> None:
+    """An entry with no options should poll every five minutes."""
+    await _setup(hass, entry, raw_payload)
+    assert entry.runtime_data.update_interval == timedelta(minutes=5)
+
+
+async def test_scan_interval_option_is_honoured(
+    hass: HomeAssistant, raw_payload
+) -> None:
+    """A configured interval should replace the default."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_EMAIL: "user@example.com", CONF_PASSWORD: "secret"},
+        options={CONF_SCAN_INTERVAL: 30},
+        unique_id="42",
+    )
+    entry.add_to_hass(hass)
+    await _setup(hass, entry, raw_payload)
+    assert entry.runtime_data.update_interval == timedelta(minutes=30)
+
+
+async def test_options_flow_updates_the_interval(
+    hass: HomeAssistant, entry, raw_payload
+) -> None:
+    """Saving the options form should change how often we poll."""
+    await _setup(hass, entry, raw_payload)
+
+    with (
+        patch(
+            "custom_components.schulmanager_online.api."
+            "SchulmanagerClient.async_ensure_login",
+            return_value=None,
+        ),
+        patch(
+            "custom_components.schulmanager_online.api."
+            "SchulmanagerClient.async_get_data",
+            return_value=raw_payload,
+        ),
+    ):
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        assert result["step_id"] == "init"
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {CONF_SCAN_INTERVAL: 15}
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_SCAN_INTERVAL] == 15
+    # The listener has to reload the entry or the new interval never applies.
+    assert entry.runtime_data.update_interval == timedelta(minutes=15)
+
+
+async def test_scan_interval_is_bounded(
+    hass: HomeAssistant, entry, raw_payload
+) -> None:
+    """Zero or absurd intervals should be rejected by the schema."""
+    await _setup(hass, entry, raw_payload)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    for bad in (0, -5, 5000):
+        with pytest.raises(vol.Invalid):
+            await hass.config_entries.options.async_configure(
+                result["flow_id"], {CONF_SCAN_INTERVAL: bad}
+            )

@@ -37,6 +37,14 @@ password.
 
 There is no YAML configuration.
 
+### Options
+
+**Configure** on the integration card exposes the update interval, which
+defaults to **5 minutes**. That keeps a cancelled first period useful on the
+morning it happens, and at one batched request per poll it is roughly 290 calls
+a day against the 800 the API allows. Raise it if you would rather poll less;
+the entry reloads itself when you save.
+
 ## Entities
 
 One device per student, plus a shared letters sensor.

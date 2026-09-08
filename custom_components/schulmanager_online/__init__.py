@@ -35,7 +35,16 @@ async def async_setup_entry(
 
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # A changed poll interval only takes effect on a fresh coordinator.
+    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
     return True
+
+
+async def _async_reload_entry(
+    hass: HomeAssistant, entry: SchulmanagerConfigEntry
+) -> None:
+    """Reload the entry after its options changed."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(

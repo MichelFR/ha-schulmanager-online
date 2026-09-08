@@ -5,17 +5,18 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from .api import SchulmanagerAuthError, SchulmanagerClient, SchulmanagerError
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import DEFAULT_SCAN_INTERVAL_MINUTES, DOMAIN
 from .model import Lesson, parse_class_hours, parse_lessons, student_name
 
 _LOGGER = logging.getLogger(__name__)
@@ -100,12 +101,15 @@ class SchulmanagerCoordinator(DataUpdateCoordinator[SchulmanagerData]):
         client: SchulmanagerClient,
     ) -> None:
         """Initialise the coordinator."""
+        minutes = config_entry.options.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_MINUTES
+        )
         super().__init__(
             hass,
             _LOGGER,
             config_entry=config_entry,
             name=DOMAIN,
-            update_interval=DEFAULT_SCAN_INTERVAL,
+            update_interval=timedelta(minutes=minutes),
         )
         self.client = client
 

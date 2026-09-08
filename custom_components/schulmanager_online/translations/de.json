@@ -11,21 +11,29 @@
       "pick_school": {
         "title": "Schule finden",
         "description": "Suche nach Name, Ort oder Postleitzahl.",
-        "data": { "query": "Suche" }
+        "data": {
+          "query": "Suche"
+        }
       },
       "select_school": {
         "title": "Schule auswählen",
-        "data": { "school": "Schule" }
+        "data": {
+          "school": "Schule"
+        }
       },
       "login_method": {
         "title": "Wie möchten Sie sich anmelden?",
         "description": "Ihre Schule unterstützt Single-Sign-On.",
-        "data": { "method": "Anmeldeverfahren" }
+        "data": {
+          "method": "Anmeldeverfahren"
+        }
       },
       "sso": {
         "title": "Anmelden mit {provider}",
         "description": "1. Öffnen Sie diesen Link und melden Sie sich an:\n\n{url}\n\n2. Sie landen auf einer leeren oder Fehlerseite. Kopieren Sie die vollständige Adresse aus der Adressleiste und fügen Sie sie unten ein — darin steckt die Anmeldeinformation für Home Assistant.",
-        "data": { "redirect_url": "Adresse, auf der Sie gelandet sind" }
+        "data": {
+          "redirect_url": "Adresse, auf der Sie gelandet sind"
+        }
       },
       "credentials": {
         "description": "Melden Sie sich mit Ihrem Schulmanager-Online-Konto an.",
@@ -36,7 +44,9 @@
       },
       "reauth_confirm": {
         "description": "Ihr Passwort für Schulmanager Online ist nicht mehr gültig.",
-        "data": { "password": "Passwort" }
+        "data": {
+          "password": "Passwort"
+        }
       }
     },
     "error": {
@@ -55,27 +65,72 @@
   },
   "entity": {
     "sensor": {
-      "current_lesson": { "name": "Aktuelle Stunde" },
-      "next_lesson": { "name": "Nächste Stunde" },
-      "next_lesson_start": { "name": "Nächste Stunde beginnt" },
-      "lessons_today": { "name": "Stunden heute" },
-      "school_start": { "name": "Schulbeginn" },
-      "school_end": { "name": "Schulende" },
-      "changes_today": { "name": "Planabweichungen heute" },
-      "changes_tomorrow": { "name": "Planabweichungen morgen" },
-      "upcoming_exams": { "name": "Anstehende Klassenarbeiten" },
-      "next_exam": { "name": "Nächste Klassenarbeit" },
-      "open_homework": { "name": "Offene Hausaufgaben" },
-      "homework_due_tomorrow": { "name": "Hausaufgaben für morgen" },
-      "unread_letters": { "name": "Ungelesene Elternbriefe" }
+      "current_lesson": {
+        "name": "Aktuelle Stunde"
+      },
+      "next_lesson": {
+        "name": "Nächste Stunde"
+      },
+      "next_lesson_start": {
+        "name": "Nächste Stunde beginnt"
+      },
+      "lessons_today": {
+        "name": "Stunden heute"
+      },
+      "school_start": {
+        "name": "Schulbeginn"
+      },
+      "school_end": {
+        "name": "Schulende"
+      },
+      "changes_today": {
+        "name": "Planabweichungen heute"
+      },
+      "changes_tomorrow": {
+        "name": "Planabweichungen morgen"
+      },
+      "upcoming_exams": {
+        "name": "Anstehende Klassenarbeiten"
+      },
+      "next_exam": {
+        "name": "Nächste Klassenarbeit"
+      },
+      "open_homework": {
+        "name": "Offene Hausaufgaben"
+      },
+      "homework_due_tomorrow": {
+        "name": "Hausaufgaben für morgen"
+      },
+      "unread_letters": {
+        "name": "Ungelesene Elternbriefe"
+      }
     },
     "binary_sensor": {
-      "school_today": { "name": "Schule heute" },
-      "at_school": { "name": "In der Schule" },
-      "has_changes_today": { "name": "Planabweichung heute" }
+      "school_today": {
+        "name": "Schule heute"
+      },
+      "at_school": {
+        "name": "In der Schule"
+      },
+      "has_changes_today": {
+        "name": "Planabweichung heute"
+      }
     },
     "calendar": {
-      "timetable": { "name": "Stundenplan" }
+      "timetable": {
+        "name": "Stundenplan"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen",
+        "description": "Wie oft Schulmanager Online abgefragt wird, in Minuten. Fünf Minuten sorgen dafür, dass eine ausgefallene erste Stunde noch am selben Morgen ankommt; erhöhen Sie den Wert, wenn seltener abgefragt werden soll.",
+        "data": {
+          "scan_interval": "Aktualisierungsintervall (Minuten)"
+        }
+      }
     }
   }
 }

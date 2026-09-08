@@ -1,7 +1,7 @@
 rules:
   # Bronze
   action-setup: done  # no custom actions
-  appropriate-polling: done  # 30 minutes; timetable changes are not minute-critical
+  appropriate-polling: done  # 5 minutes by default, user configurable
   brands: todo  # needs a PR against home-assistant/brands
   common-modules: done  # coordinator.py, entity.py, model.py
   config-flow: done
@@ -22,7 +22,7 @@ rules:
   # Silver
   action-exceptions: done  # no actions
   config-entry-unloading: done
-  docs-configuration-parameters: done  # no options flow
+  docs-configuration-parameters: done  # update interval, documented in the README
   docs-installation-parameters: done
   entity-unavailable: done  # entities drop out with the student
   integration-owner: done
@@ -50,7 +50,7 @@ rules:
   entity-translations: done
   exception-translations: todo
   icon-translations: todo
-  reconfiguration-flow: todo
+  reconfiguration-flow: todo  # options flow covers the interval; credentials still need reauth
   repair-issues: exempt  # nothing the user can repair in place
   stale-devices: todo  # a departed student's device is not removed
 

@@ -7,8 +7,14 @@ from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import (
@@ -20,7 +26,14 @@ from .api import (
     SsoMethod,
     parse_user_device,
 )
-from .const import CONF_INSTITUTION_ID, CONF_USER_DEVICE, DOMAIN
+from .const import (
+    CONF_INSTITUTION_ID,
+    CONF_USER_DEVICE,
+    DEFAULT_SCAN_INTERVAL_MINUTES,
+    DOMAIN,
+    MAX_SCAN_INTERVAL_MINUTES,
+    MIN_SCAN_INTERVAL_MINUTES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +58,14 @@ class SchulmanagerConfigFlow(ConfigFlow, domain=DOMAIN):
     """
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> SchulmanagerOptionsFlow:
+        """Return the options flow."""
+        return SchulmanagerOptionsFlow()
 
     def __init__(self) -> None:
         """Start with no school chosen."""
@@ -270,4 +291,33 @@ class SchulmanagerConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reauth_confirm",
             data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
             errors=errors,
+        )
+
+
+class SchulmanagerOptionsFlow(OptionsFlow):
+    """Let the user trade freshness against politeness to the API."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask for the poll interval."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        current = self.config_entry.options.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_MINUTES
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_SCAN_INTERVAL, default=current): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(
+                            min=MIN_SCAN_INTERVAL_MINUTES,
+                            max=MAX_SCAN_INTERVAL_MINUTES,
+                        ),
+                    )
+                }
+            ),
         )
