@@ -2,7 +2,7 @@ rules:
   # Bronze
   action-setup: done
   appropriate-polling: done
-  brands: todo
+  brands: todo # placeholder assets in brand/; submit PR to home-assistant/brands
   common-modules: done
   config-flow: done
   config-flow-test-coverage: todo
