@@ -36,7 +36,7 @@
               {"type": "heading", "heading": "Planänderungen", "icon": "mdi:calendar-alert"},
               {
                 "type": "markdown",
-                "content": "{% for key, label in [('today','Heute'), ('tomorrow','Morgen')] %}{% set s = 'sensor.<PREFIX>_timetable_changes_' ~ key %}{% set ch = state_attr(s,'changes') or [] %}**{{ label }}**{% if ch | count == 0 %} — alles nach Plan\n{% else %}\n{% for c in ch %}- {{ c.class_hour }}. Stunde **{{ c.subject or 'Unterricht' }}**{% if c.is_cancelled %} — fällt aus{% else %} — Vertretung{% if c.room %} in {{ c.room }}{% endif %}{% endif %}\n{% endfor %}{% endif %}\n{% endfor %}",
+                "content": "{% for s, label in [('sensor.<PREFIX>_timetable_changes_today','Heute'), ('sensor.<PREFIX>_timetable_changes_tomorrow','Morgen')] %}{% set ch = state_attr(s,'changes') or [] %}**{{ label }}**{% if ch | count == 0 %} — alles nach Plan\n{% else %}\n{% for c in ch %}- {{ c.class_hour }}. Stunde **{{ c.subject or 'Unterricht' }}**{% if c.is_cancelled %} — fällt aus{% else %} — Vertretung{% if c.room %} in {{ c.room }}{% endif %}{% endif %}\n{% endfor %}{% endif %}\n{% endfor %}",
                 "grid_options": {"columns": "full"}
               },
               {"type": "tile", "entity": "sensor.<PREFIX>_timetable_changes_today", "name": "Heute", "grid_options": {"columns": 6}},

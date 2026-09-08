@@ -3,8 +3,33 @@
 Both files use `<PREFIX>` where the student's entity prefix goes. Home Assistant
 derives that from the device name (the student's full name), so the real value
 is only known once the integration has been added — check Developer Tools →
-States. On a non-English instance the entity names may be localised, which is
-why these are not pre-filled.
+States.
+
+**The entity *names* are localised too**, which caught me out on a German
+instance: the sensor is `sensor.<prefix>_aktuelle_stunde`, not
+`..._current_lesson`. So substituting the prefix alone is not enough — map the
+suffixes as well:
+
+| Translation key | German suffix |
+| --- | --- |
+| `current_lesson` | `aktuelle_stunde` |
+| `next_lesson` / `next_lesson_starts` | `nachste_stunde` / `nachste_stunde_beginnt` |
+| `lessons_today` | `stunden_heute` |
+| `school_starts` / `school_ends` | `schulbeginn` / `schulende` |
+| `timetable_changes_today` / `_tomorrow` | `planabweichungen_heute` / `_morgen` |
+| `upcoming_exams` / `next_exam` | `anstehende_klassenarbeiten` / `nachste_klassenarbeit` |
+| `open_homework` / `homework_due_tomorrow` | `offene_hausaufgaben` / `hausaufgaben_fur_morgen` |
+| `unread_letters` | `ungelesene_elternbriefe` |
+| `absence_rate` / `absent_lessons` | `abwesenheitsquote` / `fehlstunden` |
+| `unexcused_lessons` / `absent_days` | `unentschuldigte_fehlstunden` / `fehltage` |
+| `classbook_entries` | `klassenbucheintrage` |
+| `next_school_event` | `nachster_schultermin` |
+| `timetable` / `school_calendar` | `stundenplan` / `schulkalender` |
+| `school_today` / `at_school` / `school_holiday` | `schule_heute` / `in_der_schule` / `ferien` |
+
+Also: don't build an entity id by string concatenation inside a Jinja template
+(`'sensor.' ~ prefix ~ '_changes_' ~ key`) — a find-and-replace over the config
+will mangle it. Write the ids out in full.
 
 | File | What it is |
 | --- | --- |
