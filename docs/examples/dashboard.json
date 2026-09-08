@@ -1,0 +1,167 @@
+{
+  "title": "Schule",
+  "icon": "mdi:school",
+  "config": {
+    "views": [
+      {
+        "title": "Heute",
+        "path": "heute",
+        "type": "sections",
+        "icon": "mdi:calendar-today",
+        "max_columns": 3,
+        "badges": [
+          {"type": "entity", "entity": "binary_sensor.<PREFIX>_school_today", "show_name": true, "show_state": true},
+          {"type": "entity", "entity": "binary_sensor.<PREFIX>_school_holiday", "show_name": true, "show_state": true},
+          {"type": "entity", "entity": "sensor.<PREFIX>_unread_letters", "show_name": true, "show_state": true, "color": "amber"}
+        ],
+        "sections": [
+          {
+            "type": "grid",
+            "cards": [
+              {"type": "heading", "heading": "Jetzt", "icon": "mdi:clock-outline"},
+              {
+                "type": "markdown",
+                "content": "{% set l = 'sensor.<PREFIX>_current_lesson' %}{% set n = 'sensor.<PREFIX>_next_lesson' %}{% if states(l) not in ['unknown','unavailable'] %}## {{ states(l) }}\n{{ state_attr(l,'class_hour') }}. Stunde · **{{ state_attr(l,'room') or '?' }}** · {{ (state_attr(l,'teachers') or []) | join(', ') }}\n\n{{ state_attr(l,'start') | as_timestamp | timestamp_custom('%H:%M', true) }}–{{ state_attr(l,'end') | as_timestamp | timestamp_custom('%H:%M', true) }}{% if state_attr(l,'is_substitution') %}\n\n> ↷ **Vertretung**{% if state_attr(l,'original_room') %} — vorher {{ state_attr(l,'original_room') }}{% endif %}{% endif %}{% elif states(n) not in ['unknown','unavailable'] %}## Gerade kein Unterricht\nAls Nächstes: **{{ states(n) }}** um {{ state_attr(n,'start') | as_timestamp | timestamp_custom('%H:%M', true) }} in {{ state_attr(n,'room') or '?' }}{% else %}## Kein Unterricht mehr heute{% endif %}",
+                "grid_options": {"columns": "full"}
+              },
+              {"type": "tile", "entity": "sensor.<PREFIX>_next_lesson", "name": "Nächste Stunde", "icon": "mdi:arrow-right-circle", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_next_lesson_starts", "name": "Beginnt", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_school_starts", "name": "Schulbeginn", "icon": "mdi:weather-sunset-up", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_school_ends", "name": "Schulende", "icon": "mdi:weather-sunset-down", "grid_options": {"columns": 6}}
+            ]
+          },
+          {
+            "type": "grid",
+            "cards": [
+              {"type": "heading", "heading": "Planänderungen", "icon": "mdi:calendar-alert"},
+              {
+                "type": "markdown",
+                "content": "{% for key, label in [('today','Heute'), ('tomorrow','Morgen')] %}{% set s = 'sensor.<PREFIX>_timetable_changes_' ~ key %}{% set ch = state_attr(s,'changes') or [] %}**{{ label }}**{% if ch | count == 0 %} — alles nach Plan\n{% else %}\n{% for c in ch %}- {{ c.class_hour }}. Stunde **{{ c.subject or 'Unterricht' }}**{% if c.is_cancelled %} — fällt aus{% else %} — Vertretung{% if c.room %} in {{ c.room }}{% endif %}{% endif %}\n{% endfor %}{% endif %}\n{% endfor %}",
+                "grid_options": {"columns": "full"}
+              },
+              {"type": "tile", "entity": "sensor.<PREFIX>_timetable_changes_today", "name": "Heute", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_timetable_changes_tomorrow", "name": "Morgen", "grid_options": {"columns": 6}}
+            ]
+          },
+          {
+            "type": "grid",
+            "cards": [
+              {"type": "heading", "heading": "Aufgaben & Prüfungen", "icon": "mdi:book-open-variant"},
+              {"type": "tile", "entity": "sensor.<PREFIX>_open_homework", "name": "Offene Hausaufgaben", "icon": "mdi:pencil", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_homework_due_tomorrow", "name": "Für morgen", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_upcoming_exams", "name": "Klassenarbeiten (14 Tage)", "icon": "mdi:clipboard-text-clock", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_next_exam", "name": "Nächste Arbeit", "grid_options": {"columns": 6}},
+              {
+                "type": "markdown",
+                "content": "{% set hw = state_attr('sensor.<PREFIX>_open_homework','homework') or [] %}{% if hw | count == 0 %}Keine offenen Hausaufgaben 🎉{% else %}{% for h in hw %}- **{{ h.subject or '?' }}** ({{ h.date }}): {{ h.homework }}\n{% endfor %}{% endif %}",
+                "grid_options": {"columns": "full"}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Stundenplan",
+        "path": "stundenplan",
+        "type": "sections",
+        "icon": "mdi:timetable",
+        "max_columns": 2,
+        "sections": [
+          {
+            "type": "grid",
+            "column_span": 2,
+            "cards": [
+              {"type": "heading", "heading": "Stundenplan", "icon": "mdi:timetable"},
+              {
+                "type": "calendar",
+                "entities": ["calendar.<PREFIX>_timetable"],
+                "initial_view": "dayGridDay",
+                "grid_options": {"columns": "full", "rows": 8}
+              },
+              {"type": "heading", "heading": "Nur 7 Tage im Voraus verfügbar", "heading_style": "subtitle", "icon": "mdi:information-outline"}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Termine",
+        "path": "termine",
+        "type": "sections",
+        "icon": "mdi:calendar-star",
+        "max_columns": 2,
+        "sections": [
+          {
+            "type": "grid",
+            "column_span": 2,
+            "cards": [
+              {"type": "heading", "heading": "Schulkalender", "icon": "mdi:calendar-star"},
+              {
+                "type": "calendar",
+                "entities": ["calendar.<PREFIX>_school_calendar"],
+                "initial_view": "dayGridMonth",
+                "grid_options": {"columns": "full", "rows": 10}
+              },
+              {"type": "tile", "entity": "sensor.<PREFIX>_next_school_event", "name": "Nächster Termin", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "binary_sensor.<PREFIX>_school_holiday", "name": "Ferien", "icon": "mdi:beach", "grid_options": {"columns": 6}}
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Fehlzeiten",
+        "path": "fehlzeiten",
+        "type": "sections",
+        "icon": "mdi:account-clock",
+        "max_columns": 3,
+        "sections": [
+          {
+            "type": "grid",
+            "cards": [
+              {"type": "heading", "heading": "Dieses Halbjahr", "icon": "mdi:chart-donut"},
+              {
+                "type": "gauge",
+                "entity": "sensor.<PREFIX>_absence_rate",
+                "name": "Abwesenheitsquote",
+                "min": 0,
+                "max": 25,
+                "needle": true,
+                "severity": {"green": 0, "yellow": 5, "red": 10},
+                "grid_options": {"columns": 12}
+              },
+              {"type": "tile", "entity": "sensor.<PREFIX>_absent_lessons", "name": "Fehlstunden", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_unexcused_lessons", "name": "Unentschuldigt", "icon": "mdi:alert-circle", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_absent_days", "name": "Fehltage", "grid_options": {"columns": 6}},
+              {"type": "tile", "entity": "sensor.<PREFIX>_classbook_entries", "name": "Klassenbucheinträge", "icon": "mdi:notebook-edit", "grid_options": {"columns": 6}}
+            ]
+          },
+          {
+            "type": "grid",
+            "cards": [
+              {"type": "heading", "heading": "Nach Fach", "icon": "mdi:format-list-bulleted"},
+              {
+                "type": "markdown",
+                "content": "{% set rows = state_attr('sensor.<PREFIX>_absence_rate','by_subject') or [] %}{% if rows | count == 0 %}Keine Daten.{% else %}| Fach | Fehlt | Quote |\n|---|---:|---:|\n{% for r in rows %}| {{ r.subject }} | {{ r.absent_lessons }} / {{ r.total_lessons }} | {{ r.rate }} % |\n{% endfor %}{% endif %}",
+                "grid_options": {"columns": "full"}
+              }
+            ]
+          },
+          {
+            "type": "grid",
+            "cards": [
+              {"type": "heading", "heading": "Verlauf", "icon": "mdi:chart-line"},
+              {
+                "type": "history-graph",
+                "hours_to_show": 720,
+                "entities": [
+                  {"entity": "sensor.<PREFIX>_absent_lessons", "name": "Fehlstunden", "color": "orange"},
+                  {"entity": "sensor.<PREFIX>_unexcused_lessons", "name": "Unentschuldigt", "color": "red"}
+                ],
+                "grid_options": {"columns": "full", "rows": 4}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

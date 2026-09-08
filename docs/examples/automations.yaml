@@ -1,0 +1,136 @@
+# Ready-to-apply automations for the Schulmanager Online integration.
+#
+# Replace <PREFIX> with the student's entity prefix, which Home Assistant
+# derives from the device name (the student's full name). Check the real value
+# in Developer Tools → States after adding the integration; on a non-English
+# instance the entity names may be localised.
+#
+# Devices used here:
+#   notify.mobile_app_iphone_16_von_enrique     (iPhone)
+#   notify.mobile_app_ipad_air_m4_von_enrique   (tablet)
+#
+# Live Activities need iOS 17.2+, HA Core 2026.7+, and the feature enabled once
+# in the companion app under Settings → Live Activities. They are NOT available
+# on iPad — an Apple limitation — so that automation targets the iPhone only.
+
+# --------------------------------------------------------------------------- #
+# 1. Silent Live Activity showing the current lesson
+# --------------------------------------------------------------------------- #
+- id: schulmanager_live_activity_aktuelle_stunde
+  alias: "Schulmanager: Live-Aktivität aktuelle Stunde"
+  description: >-
+    Zeigt die laufende Stunde als Live-Aktivität auf dem iPhone (Sperrbildschirm
+    und Dynamic Island) und beendet sie, sobald der Unterricht vorbei ist.
+    Updates sind lautlos; der Countdown läuft auf dem Gerät selbst.
+  mode: restart
+  triggers:
+    # The sensor changes at every lesson boundary, which is exactly when the
+    # activity needs to start, update or end.
+    - trigger: state
+      entity_id: sensor.<PREFIX>_current_lesson
+  variables:
+    lesson: sensor.<PREFIX>_current_lesson
+  actions:
+    - choose:
+        # A lesson is running → start or update the activity.
+        - conditions:
+            - condition: not
+              conditions:
+                - condition: state
+                  entity_id: sensor.<PREFIX>_current_lesson
+                  state:
+                    - unknown
+                    - unavailable
+          sequence:
+            - action: notify.mobile_app_iphone_16_von_enrique
+              data:
+                title: "Stundenplan"
+                message: >-
+                  {{ states(lesson) }}
+                  {%- set room = state_attr(lesson, 'room') %}
+                  {%- if room %} · {{ room }}{% endif %}
+                  {%- set hour = state_attr(lesson, 'class_hour') %}
+                  {%- if hour %} · {{ hour }}. Stunde{% endif %}
+                data:
+                  tag: schulmanager_lesson
+                  live_update: true
+                  # Silent has no effect on the first push, only on updates.
+                  silent: true
+                  chronometer: true
+                  when_relative: true
+                  when: >-
+                    {% set ends = state_attr(lesson, 'end') %}
+                    {{ [ ((as_timestamp(ends) - as_timestamp(now())) | int), 0 ] | max
+                       if ends else 0 }}
+                  notification_icon: mdi:school
+                  notification_icon_color: "#428bca"
+                  url: /schulmanager/stundenplan
+      # No lesson running → clear the activity.
+      default:
+        - action: notify.mobile_app_iphone_16_von_enrique
+          data:
+            message: clear_notification
+            data:
+              tag: schulmanager_lesson
+
+# --------------------------------------------------------------------------- #
+# 2. Silent, Focus-breaking alert for substitutions and cancellations
+# --------------------------------------------------------------------------- #
+- id: schulmanager_planabweichung
+  alias: "Schulmanager: Vertretung oder Ausfall"
+  description: >-
+    Meldet Vertretungen und ausgefallene Stunden für heute und morgen.
+    interruption-level time-sensitive durchbricht Fokus/Nicht stören,
+    sound none macht die Meldung lautlos. (Ein echtes "critical" wäre
+    nicht lautlos — Apple lässt das nicht zu.)
+  mode: queued
+  max: 5
+  triggers:
+    - trigger: state
+      entity_id:
+        - sensor.<PREFIX>_timetable_changes_today
+        - sensor.<PREFIX>_timetable_changes_tomorrow
+  conditions:
+    # The triggering entity varies between the two sensors, and neither
+    # numeric_state nor state accepts a templated entity_id — so this is one of
+    # the cases where a template condition is the correct tool rather than a
+    # shortcut. Also ignores the restart-time transition out of unknown, which
+    # would otherwise re-announce every change on every Home Assistant restart.
+    - condition: template
+      value_template: >-
+        {{ trigger.from_state is not none
+           and trigger.from_state.state not in ['unknown', 'unavailable']
+           and (trigger.to_state.state | int(0)) > 0 }}
+  variables:
+    tag_suffix: "{{ 'heute' if trigger.entity_id.endswith('today') else 'morgen' }}"
+    when_word: "{{ 'Heute' if trigger.entity_id.endswith('today') else 'Morgen' }}"
+    changes: "{{ state_attr(trigger.entity_id, 'changes') or [] }}"
+  actions:
+    - variables:
+        body: >-
+          {%- for change in changes %}
+          {{ change.class_hour }}. Stunde {{ change.subject or 'Unterricht' }}
+          {%- if change.is_cancelled %} fällt aus
+          {%- else %} — Vertretung
+          {%- if change.room %} in {{ change.room }}{% endif %}
+          {%- if change.teachers %} bei {{ change.teachers | join(', ') }}{% endif %}
+          {%- endif %}
+          {% endfor -%}
+    - parallel:
+        - action: notify.mobile_app_iphone_16_von_enrique
+          data: &planabweichung
+            title: >-
+              {{ when_word }}: {{ changes | count }}
+              {{ 'Planänderung' if changes | count == 1 else 'Planänderungen' }}
+            message: "{{ body | trim }}"
+            data:
+              push:
+                # Silent, but still cuts through Focus / Do Not Disturb.
+                interruption-level: time-sensitive
+                sound: none
+              tag: "schulmanager_changes_{{ tag_suffix }}"
+              group: schulmanager-planabweichung
+              notification_icon: mdi:calendar-alert
+              url: /schulmanager/stundenplan
+        - action: notify.mobile_app_ipad_air_m4_von_enrique
+          data: *planabweichung
