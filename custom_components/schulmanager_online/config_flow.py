@@ -53,7 +53,7 @@ class SchulmanagerConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_auth"
             except SchulmanagerError:
                 errors["base"] = "cannot_connect"
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _LOGGER.exception("Unexpected error during setup")
                 errors["base"] = "unknown"
             else:
