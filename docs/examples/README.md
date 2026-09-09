@@ -40,16 +40,24 @@ will mangle it. Write the ids out in full.
 
 **Live Activity (current lesson).** Needs iOS 17.2+, HA Core 2026.7+, and the
 feature switched on once in the companion app under Settings → Live Activities;
-it is still flagged beta. `chronometer` makes the countdown tick on the device
-rather than pushing an update every minute, and `silent: true` keeps updates
-from making noise. **Live Activities do not work on iPad** — an Apple
+it is still flagged beta. **Live Activities do not work on iPad** — an Apple
 limitation, documented by Home Assistant — so that automation targets the
 iPhone only.
 
-Worth knowing: iOS has a separate *push-to-start budget*. Starting and ending
-activities repeatedly — as happens while testing — exhausts it, after which new
-activities fail **silently**: the automation succeeds and nothing is logged. It
-replenishes on its own; a reboot does not help.
+**One activity per day, not one per lesson.** The first version cleared the
+activity whenever a lesson ended and started a fresh one at the next bell —
+observed in the traces as `unknown` → `clear_notification` at 09:30, then a new
+start at 09:50. That is roughly seven push-to-starts a day, and iOS's
+push-to-start budget is finite: once exhausted, new activities fail **silently**
+— the automation succeeds and nothing is logged. So breaks now *update* the
+same tag with "Pause · danach <Fach>" and only school's end clears it.
+
+**The progress bar needs the five-minute tick.** `progress` moves only when a
+push arrives, and during a lesson nothing about the sensor changes — so without
+a `time_pattern` trigger the bar would sit frozen at whatever it was when the
+lesson started. `chronometer` is different: it ticks down on the device between
+pushes, which is why the countdown stays live for free. Verified mid-lesson:
+Erdkunde 09:50–10:35 rendered `progress: 39` and `when: 1646` at 10:07.
 
 **"Critical but silent" is not possible on iOS.** Critical alerts are designed
 to always make a sound, and the `volume: 0` trick is undocumented and has been
